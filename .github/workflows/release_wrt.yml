@@ -104,28 +104,28 @@ jobs:
             chmod +x "$script"
           done
           ./wrt_core/pre_clone_action.sh ${{ inputs.model }}
-      #====================【新增修复步骤 START】====================
-      - name: Fix luci-app-mosdns dependency(修复mosdns geo2txt依赖)
+      #====================【方案1修复步骤 START】====================
+      - name: Fix luci-app-mosdns dependency(feed方式添加mosdns源)
         run: |
           cd ./action_build
-          # 删除原有旧mosdns、v2ray-geodata，避免冲突
+          # 先删除原有冲突包，避免旧包残留
           rm -rf package/luci-app-mosdns
           rm -rf feeds/packages/net/v2ray-geodata
           rm -rf package/mosdns
-          # 拉取sbwml v5完整版mosdns套件（自带geo2txt,v2dat）
-          git clone https://github.com/sbwml/luci-app-mosdns -b v5 package/mosdns
-          #拉取geodata规则库
-          git clone https://github.com/sbwml/v2ray-geodata package/v2ray-geodata
-          #更新feeds，让编译系统识别新增依赖包
+          # 追加sbwml mosdns v5 feed源，使用ghproxy加速
+          echo "src-git mosdns https://mirror.ghproxy.com/https://github.com/sbwml/luci-app-mosdns.git;v5" >> feeds.conf.default
+          echo "src-git v2ray_geodata https://mirror.ghproxy.com/https://github.com/sbwml/v2ray-geodata.git" >> feeds.conf.default
+          # 更新feeds并安装
           ./scripts/feeds update -a
           ./scripts/feeds install -a
           cd -
-      #====================【新增修复步骤 END】====================
+      #====================【方案1修复步骤 END】====================
       # 【关键修复】替换Xray源码地址为ghproxy加速，解决拉取失败Error255
       - name: Replace Xray-core Git Source Mirror
         run: |
-          # 批量替换所有xray-core包的GitHub地址
-          find ./ -path "*package/xray-core/Makefile" -type f -exec sed -i 's|https://github.com/XTLS/Xray-core.git|https://mirror.ghproxy.com/https://github.com/XTLS/Xray-core.git|g' {} \; || true
+          echo "开始替换Xray-core源码镜像地址..."
+          find ./ -path "*package/xray-core/Makefile" -type f -exec sed -i 's|https://github.com/XTLS/Xray-core.git|https://mirror.ghproxy.com/https://github.com/XTLS/Xray-core.git|g' {} \;
+          echo "Xray镜像替换完成"
       # 构建前清空旧编译缓存，stamp残留是install报错主要诱因
       - name: Clean Old Build Cache Before Compile
         run: |
@@ -150,9 +150,9 @@ jobs:
           key: ${{env.WRT_CONFIG}}-${{env.WRT_INFO}}-${{env.WRT_HASH}}
           restore-keys: ${{env.WRT_CONFIG}}-${{env.WRT_INFO}}
           path: |
-            ./wrt/.ccache
-            ./wrt/staging_dir/host*
-            ./wrt/staging_dir/tool*
+            ./action_build/.ccache
+            ./action_build/staging_dir/host*
+            ./action_build/staging_dir/tool*
       - name: Refresh the cache
         run: |
           if [ -d "./action_build/staging_dir" ]; then
@@ -193,8 +193,12 @@ jobs:
           echo "KVER=$(grep -oP "^kernel.*" ./firmware/*.manifest | grep -oP "[4-6]\.[0-9]{1,3}\.[0-9]{1,3}")" >> $GITHUB_ENV
       - name: Delete Old Cache
         run: |
-          gh cache list --key ${{ matrix.os }}-${{ hashFiles('**/repo_flag') }}- --json key --jq '.[] | .key' | while read -r key; do
-            gh cache delete "$key"
+          # 增加判断，避免无缓存时报错
+          CACHE_KEY_PREFIX="${{ matrix.os }}-${{ hashFiles('**/repo_flag') }}-"
+          gh cache list --key "$CACHE_KEY_PREFIX" --json key --jq '.[] | .key' | while read -r key; do
+            if [[ "$key" == "${CACHE_KEY_PREFIX}"* ]]; then
+              gh cache delete "$key"
+            fi
           done
           echo "========cache status========"
           echo "ccache: $(du -sh ./action_build/.ccache | cut -f 1)"
