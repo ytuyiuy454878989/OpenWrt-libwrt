@@ -104,6 +104,19 @@ jobs:
             chmod +x "$script"
           done
           ./wrt_core/pre_clone_action.sh ${{ inputs.model }}
+      # =====================【修复GO版本冲突：拉取兼容go1.26的xray-core sbwml包 START】====================
+      - name: Fix Xray-core Go Version Require
+        run: |
+          cd ./action_build
+          rm -rf package/xray-core
+          rm -rf feeds/packages/net/xray-core
+          rm -rf package/feeds/custom_feed/xray-core
+          # sbwml 适配OpenWrt的xray-core，对go版本友好
+          if [ ! -d package/xray-core ]; then
+            git clone --depth=1 https://mirror.ghproxy.com/https://github.com/sbwml/package-openwrt-xray-core.git package/xray-core
+          fi
+          cd -
+      # =====================【修复GO版本冲突 END】====================
       #====================【方案2修复步骤 START】====================
       - name: Fix luci-app-mosdns dependency(修复mosdns geo2txt依赖)
         run: |
@@ -125,7 +138,7 @@ jobs:
           ./scripts/feeds install -a
           cd -
       #====================【方案2修复步骤 END】====================
-      # 【关键修复】替换Xray源码地址为ghproxy加速，解决拉取失败Error255
+      # 【关键修复】替换Xray-core Git Source Mirror（这里已经不需要了，保留兜底）
       - name: Replace Xray-core Git Source Mirror
         run: |
           echo "开始替换Xray-core源码镜像地址..."
