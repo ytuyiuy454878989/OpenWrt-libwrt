@@ -113,7 +113,7 @@ jobs:
           rm -rf package/feeds/custom_feed/xray-core
           # sbwml 适配OpenWrt的xray-core，对go版本友好
           if [ ! -d package/xray-core ]; then
-            git clone --depth=1 https://mirror.ghproxy.com/https://github.com/sbwml/package-openwrt-xray-core.git package/xray-core
+            git clone --depth=1 https://github.com/XTLS/Xray-core.git package/xray-core
           fi
           cd -
       # =====================【修复GO版本冲突 END】====================
