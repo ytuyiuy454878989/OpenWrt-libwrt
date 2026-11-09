@@ -94,9 +94,15 @@ jobs:
           export BUILD_SRC=$(awk -F"=" '/REPO_URL/ {print $NF}' "./wrt_core/compilecfg/${{ inputs.model }}.ini")
           echo "BUILD_SRC=$BUILD_SRC" >> $GITHUB_ENV
 
-      - name: Pre Clone
-        run: ./wrt_core/pre_clone_action.sh ${{ inputs.model }}
 
+      - name: Pre Clone
+        run: |
+          for script in $(find . -name "*.sh"); do
+            chmod +x "$script"
+          done
+          ./wrt_core/pre_clone_action.sh ${{ inputs.model }}
+    
+      
       - name: Cache Dependencies
         uses: actions/cache@v6.1.0
         with:
