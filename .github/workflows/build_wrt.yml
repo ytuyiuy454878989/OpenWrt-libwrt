@@ -37,7 +37,10 @@ on:
         required: false
         description: Remove default config fragments, comma separated
         default: ""
-
+#CI权限
+permissions:
+  contents: write
+  actions: write
 env:
   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -92,8 +95,7 @@ jobs:
           for script in $(find . -name "*.sh"); do
             chmod +x "$script"
           done
-          ./wrt_core/pre_clone_action.sh ${{ inputs.model }}
-    
+          ./wrt_core/pre_clone_action.sh ${{ inputs.model }}    
     
       - name: Cache Dependencies
         uses: actions/cache@v6.1.0
