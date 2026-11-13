@@ -226,6 +226,8 @@ install_custom_feed() {
         "sbwml/luci-app-mosdns|https://github.com/sbwml/luci-app-mosdns.git|v5|mosdns luci-app-mosdns geo2txt"
         "Openwrt-Passwall/openwrt-passwall|https://github.com/Openwrt-Passwall/openwrt-passwall.git|main|luci-app-passwall"
         "nikkinikki-org/OpenWrt-nikki|https://github.com/nikkinikki-org/OpenWrt-nikki.git|main|nikki luci-app-nikki mihomo-meta"
+        "wzdddyy/ghboost|https://github.com/wzdddyy/luci-app-ghboost.git|main|ghboost luci-app-ghboost"
+
     )
 
     feeds_path=$(get_feeds_path)
