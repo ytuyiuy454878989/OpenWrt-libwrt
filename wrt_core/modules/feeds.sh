@@ -30,7 +30,7 @@ update_feeds() {
 
     append_feed_if_missing "$FEEDS_PATH" "openwrt_bandix" "src-git openwrt_bandix https://github.com/timsaya/openwrt-bandix.git;main"
     append_feed_if_missing "$FEEDS_PATH" "luci_app_bandix" "src-git luci_app_bandix https://github.com/timsaya/luci-app-bandix.git;main"
-
+    append_feed_if_missing "$FEEDS_PATH" "luci-app-ghboost" "src-git luci_app_bandix https://github.com/wzdddyy/luci-app-ghboost.git;main"
     if [ ! -f "$BUILD_DIR/include/bpf.mk" ]; then
         touch "$BUILD_DIR/include/bpf.mk"
     fi
