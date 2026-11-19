@@ -1,4 +1,4 @@
-name: Release WRT
+name: 编译固件Release WRT
 run-name: Release - ${{ inputs.model }}
 
 on:
@@ -8,11 +8,12 @@ on:
         required: true
         description: Device Model
         type: choice
-        default: jdcloud_ipq60xx_immwrt
+        default: jdcloud_ipq60xx_libwrt
         options:
           - aliyun_ap8220_immwrt
           - aliyun_ap8220_libwrt
           - cmcc_rax3000m_immwrt
+          - cudy_tr3000_immwrt
           - gemtek_w1701k_immwrt
           - jdcloud_ax6000_immwrt
           - jdcloud_ipq60xx_immwrt
@@ -24,7 +25,6 @@ on:
           - redmi_ax5_immwrt
           - redmi_ax6_immwrt
           - redmi_ax6_libwrt
-          - redmi_ax6000_immwrt21
           - zn_m2_immwrt
           - zn_m2_libwrt
           - x64_immwrt
@@ -39,9 +39,7 @@ on:
         description: Remove default config fragments, comma separated
         default: ""
 #CI权限
-permissions:
-  contents: write
-  actions: write
+permissions: write-all
 
 env:
   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -67,18 +65,11 @@ jobs:
           sudo -E apt-get clean || true
           df -hT
 
-      - name: Build System Setup
-        run: |
-          sudo bash -c 'bash <(curl -sL https://build-scripts.immortalwrt.org/init_build_environment.sh)'
-          sudo -E apt -yqq install dos2unix
-          sudo -E apt -yqq install libfuse-dev
-          sudo -E apt -yqq autoremove --purge
-          sudo -E apt -yqq autoclean
-          sudo -E apt -yqq clean
-          sudo -E systemctl daemon-reload
-
       - name: Checkout
         uses: actions/checkout@v7.0.0
+
+      - name: Build System Setup
+        run: sudo bash wrt_core/setup_ci_environment.sh
 
       - name: Set Build Date and Timezone
         env:
@@ -94,15 +85,9 @@ jobs:
           export BUILD_SRC=$(awk -F"=" '/REPO_URL/ {print $NF}' "./wrt_core/compilecfg/${{ inputs.model }}.ini")
           echo "BUILD_SRC=$BUILD_SRC" >> $GITHUB_ENV
 
-
       - name: Pre Clone
-        run: |
-          for script in $(find . -name "*.sh"); do
-            chmod +x "$script"
-          done
-          ./wrt_core/pre_clone_action.sh ${{ inputs.model }}
-    
-      
+        run: ./wrt_core/pre_clone_action.sh ${{ inputs.model }}
+
       - name: Cache Dependencies
         uses: actions/cache@v6.1.0
         with:
